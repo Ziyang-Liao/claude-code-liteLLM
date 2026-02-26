@@ -74,7 +74,7 @@ curl http://localhost:4000/v1/models \
 
 ## 5. Claude Code 的使用配置
 
-Claude Code 可以用于代码安全扫描，扫描 GitHub 仓库中的代码。使用前需要先将目标仓库 clone 到本地，然后在仓库目录中启动 Claude Code。
+**Claude Code 可以用于代码安全扫描**，扫描 GitHub 仓库中的代码。使用前需要先将目标仓库 clone 到本地，然后在仓库目录中启动 Claude Code。
 
 ### 5.1 克隆目标仓库
 
