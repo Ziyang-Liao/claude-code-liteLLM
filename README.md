@@ -83,6 +83,22 @@ export ANTHROPIC_API_KEY="<your-litellm-master-key>"
 
 > 注意：URL 必须包含 `http://` 前缀，否则会报 URL 解析错误。`ANTHROPIC_API_KEY` 的值对应 LiteLLM 启动时设置的 `LITELLM_MASTER_KEY`。
 
+## 6. 解决 Claude Code 的 git 报错
+
+在某个 git 仓库目录中启动 Claude Code 时，可能遇到以下错误：
+
+```
+fatal: ambiguous argument 'origin/HEAD': unknown revision or path not in the working tree.
+```
+
+原因是仓库没有设置 `origin/HEAD`。在项目目录下执行：
+
+```bash
+git remote set-head origin main
+```
+
+> 如果默认分支不是 `main`，替换为实际的分支名（如 `master`）。
+
 ## 常见问题
 
 | 问题 | 原因 | 解决方案 |
