@@ -110,6 +110,20 @@ git remote set-head origin main
 
 > 如果默认分支不是 `main`，替换为实际的分支名（如 `master`）。
 
+### 5.4 启动安全扫描
+
+在仓库目录中启动 Claude Code 后，使用以下命令进行安全审查：
+
+```bash
+# 启动 Claude Code
+claude
+
+# 在 Claude Code 中执行安全审查
+/security-review
+```
+
+`/security-review` 会扫描当前仓库代码，识别潜在的安全漏洞、敏感信息泄露、不安全的编码实践等问题。
+
 ## 常见问题
 
 | 问题 | 原因 | 解决方案 |
