@@ -74,13 +74,14 @@ curl http://localhost:4000/v1/models \
 
 ## 5. 客户端配置
 
-API 地址需要包含协议前缀：
+在使用 Claude Code 的客户端机器上设置环境变量：
 
-```
-http://<ec2-private-ip>:4000
+```bash
+export ANTHROPIC_BASE_URL="http://<ec2-private-ip>:4000"
+export ANTHROPIC_API_KEY="<your-litellm-master-key>"
 ```
 
-注意是 `http://172.31.x.x:4000`，不是 `172.31.x.x:4000`。
+> 注意：URL 必须包含 `http://` 前缀，否则会报 URL 解析错误。`ANTHROPIC_API_KEY` 的值对应 LiteLLM 启动时设置的 `LITELLM_MASTER_KEY`。
 
 ## 常见问题
 
