@@ -74,7 +74,16 @@ curl http://localhost:4000/v1/models \
 
 ## 5. Claude Code 的使用配置
 
-### 5.1 设置环境变量
+Claude Code 可以用于代码安全扫描，扫描 GitHub 仓库中的代码。使用前需要先将目标仓库 clone 到本地，然后在仓库目录中启动 Claude Code。
+
+### 5.1 克隆目标仓库
+
+```bash
+git clone <github-repo-url>
+cd <repo-name>
+```
+
+### 5.2 设置环境变量
 
 在使用 Claude Code 的客户端机器上设置环境变量：
 
@@ -85,7 +94,7 @@ export ANTHROPIC_API_KEY="<your-litellm-master-key>"
 
 > 注意：URL 必须包含 `http://` 前缀，否则会报 URL 解析错误。`ANTHROPIC_API_KEY` 的值对应 LiteLLM 启动时设置的 `LITELLM_MASTER_KEY`。
 
-### 5.2 解决 git 报错
+### 5.3 解决 git 报错
 
 在某个 git 仓库目录中启动 Claude Code 时，可能遇到以下错误：
 
