@@ -94,6 +94,22 @@ export ANTHROPIC_API_KEY="<your-litellm-master-key>"
 
 > 注意：URL 必须包含 `http://` 前缀，否则会报 URL 解析错误。`ANTHROPIC_API_KEY` 的值对应 LiteLLM 启动时设置的 `LITELLM_MASTER_KEY`。
 
+也可以通过编辑 `~/.claude/settings.json` 配置本地使用：
+
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "http://<ec2-public-ip>:4000"
+  },
+  "model": "claude-opus-4-6",
+  "apiKeyHelper": "echo <your-litellm-master-key>",
+  "permissions": {
+    "allow": [],
+    "deny": []
+  }
+}
+```
+
 ### 5.3 解决 git 报错
 
 在某个 git 仓库目录中启动 Claude Code 时，可能遇到以下错误：
