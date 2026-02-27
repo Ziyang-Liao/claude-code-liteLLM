@@ -235,7 +235,7 @@ nohup python3 /data/claude-code/proxy.py > /data/claude-code/proxy.log 2>&1 &
 **架构**：
 
 ```
-Claude Code (Mac) → :4000 (proxy.py) → :4001 (LiteLLM) → Bedrock
+Claude Code → :4000 (proxy.py) → :4001 (LiteLLM) → Bedrock
 ```
 
 > 当 LiteLLM 未来版本修复了 adaptive thinking 的转换后，可以去掉代理，将 LiteLLM 改回 4000 端口直接使用。
