@@ -94,7 +94,7 @@ export ANTHROPIC_API_KEY="<your-litellm-master-key>"
 
 > 注意：URL 必须包含 `http://` 前缀，否则会报 URL 解析错误。`ANTHROPIC_API_KEY` 的值对应 LiteLLM 启动时设置的 `LITELLM_MASTER_KEY`。
 
-也可以通过编辑 `~/.claude/settings.json` 配置本地使用：
+**也可以通过编辑 `~/.claude/settings.json` 配置本地使用：**
 
 ```json
 {
