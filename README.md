@@ -140,11 +140,111 @@ claude
 
 `/security-review` 会扫描当前仓库代码，识别潜在的安全漏洞、敏感信息泄露、不安全的编码实践等问题。
 
+## 6. 解决 Bedrock 不支持 adaptive thinking 的问题
+
+### 问题描述
+
+Claude Code 客户端会发送 `thinking.type: adaptive` 参数，但 Amazon Bedrock 只接受 `enabled` 或 `disabled`，导致 Sonnet 模型报错：
+
+```
+thinking: Input tag 'adaptive' found using 'type' does not match any of the expected tags: 'disabled', 'enabled'
+```
+
+> Opus 4.6 和 Haiku 不受影响，仅 Sonnet 系列（支持 extended thinking 的模型）会触发此问题。
+
+### 原因
+
+- Claude Code 更新后开始发送 `thinking.type: adaptive`（Anthropic API 原生支持）
+- Bedrock 尚未支持 `adaptive` 类型
+- LiteLLM v1.81.x 未做 `adaptive` → `enabled` 的自动转换
+
+### 解决方案：Python 代理中间层
+
+在 LiteLLM 前面加一层轻量代理，拦截请求并将 `thinking.type: adaptive` 改写为 `thinking.type: enabled`。
+
+**步骤 1**：将 LiteLLM 改为监听 4001 端口（代理占用 4000）
+
+```bash
+docker run -d -p 4001:4000 \
+  -e LITELLM_MASTER_KEY=<your-master-key> \
+  -e AWS_REGION=us-east-1 \
+  -v /data/claude-code/config.yaml:/app/config.yaml \
+  --name litellm-backend \
+  ghcr.io/berriai/litellm:main-latest \
+  --config /app/config.yaml
+```
+
+**步骤 2**：创建代理脚本 `/data/claude-code/proxy.py`
+
+```python
+"""Thin proxy: rewrites thinking.type 'adaptive' → 'enabled' before forwarding to LiteLLM."""
+
+import json
+from aiohttp import web, ClientSession
+
+BACKEND = "http://127.0.0.1:4001"
+
+async def proxy(request: web.Request) -> web.StreamResponse:
+    url = f"{BACKEND}{request.path_qs}"
+    headers = {k: v for k, v in request.headers.items() if k.lower() not in ("host", "content-length")}
+
+    body = await request.read()
+    if body and request.content_type == "application/json":
+        try:
+            data = json.loads(body)
+            thinking = data.get("thinking")
+            if isinstance(thinking, dict) and thinking.get("type") == "adaptive":
+                thinking["type"] = "enabled"
+                thinking.setdefault("budget_tokens", 10000)
+            body = json.dumps(data).encode()
+            headers["content-length"] = str(len(body))
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+    async with ClientSession() as session:
+        async with session.request(request.method, url, headers=headers, data=body) as resp:
+            if resp.headers.get("transfer-encoding", "").lower() == "chunked" or "text/event-stream" in resp.content_type:
+                response = web.StreamResponse(status=resp.status, headers={
+                    k: v for k, v in resp.headers.items()
+                    if k.lower() not in ("transfer-encoding", "content-length")
+                })
+                response.content_type = resp.content_type
+                await response.prepare(request)
+                async for chunk in resp.content.iter_any():
+                    await response.write(chunk)
+                await response.write_eof()
+                return response
+            else:
+                return web.Response(status=resp.status, body=await resp.read(),
+                                    headers={k: v for k, v in resp.headers.items() if k.lower() != "transfer-encoding"})
+
+app = web.Application()
+app.router.add_route("*", "/{path:.*}", proxy)
+
+if __name__ == "__main__":
+    web.run_app(app, host="0.0.0.0", port=4000)
+```
+
+**步骤 3**：安装依赖并启动代理
+
+```bash
+pip install aiohttp
+nohup python3 /data/claude-code/proxy.py > /data/claude-code/proxy.log 2>&1 &
+```
+
+**架构**：
+
+```
+Claude Code (Mac) → :4000 (proxy.py) → :4001 (LiteLLM) → Bedrock
+```
+
+> 当 LiteLLM 未来版本修复了 adaptive thinking 的转换后，可以去掉代理，将 LiteLLM 改回 4000 端口直接使用。
+
 ## 常见问题
 
 | 问题 | 原因 | 解决方案 |
 |------|------|----------|
 | `invalid beta flag` | LiteLLM 版本太旧，不支持新的 beta headers | 拉取最新镜像 `docker pull ghcr.io/berriai/litellm:main-latest` |
-| `thinking type 'adaptive' does not match` | 模型 ID 错误，旧版 Opus 4 不支持 adaptive thinking | 使用 `us.anthropic.claude-opus-4-6-v1` |
+| `thinking type 'adaptive' does not match` | Bedrock 不支持 adaptive thinking，LiteLLM 未做转换 | 部署代理中间层（见步骤 6） |
 | `403 not authorized bedrock:InvokeModelWithResponseStream` | IAM Role 缺少 Bedrock 权限 | 添加 Bedrock 权限策略（见步骤 1） |
 | URL cannot be parsed | 客户端 API 地址缺少 `http://` 前缀 | 补全协议前缀 |
